@@ -1,0 +1,15 @@
+[package]
+name = "rayon-par-bridge"
+description = "Process Rayon parallel processing with a traditional sequential Iterator"
+documentation = "https://docs.rs/rayon-par-bridge"
+repository = "https://github.com/Kerollmops/rayon-par-bridge"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+rayon = { version = "1.10.0", default-features = false }
+
+[features]
+default = []
+web_spin_lock = ["rayon/web_spin_lock"]

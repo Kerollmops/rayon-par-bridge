@@ -18,16 +18,19 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 /// # Examples
 ///
 /// ```
-/// use crate::par_bridge;
+/// use rayon_par_bridge::par_bridge;
 /// use rayon::prelude::*;
 ///
 /// let data = (0u32..100).collect::<Vec<_>>();
 /// let parallel_pipeline = data.into_par_iter().map(|num| num * 2);
 ///
 /// // Use `par_bridge` to consume the parallel pipeline results sequentially
-/// let result: Vec<_> = par_bridge(5, parallel_pipeline, |seq_iter| seq_iter.collect());
+/// let mut result: Vec<_> = par_bridge(5, parallel_pipeline, |seq_iter| seq_iter.collect());
 ///
 /// assert_eq!(result.len(), 100);
+///
+/// // Numbers can be out-of-order
+/// result.sort_unstable();
 /// assert_eq!(result[0], 0);
 /// assert_eq!(result[1], 2);
 /// ```
@@ -59,5 +62,29 @@ impl<T> Iterator for RayonIntoIter<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rayon::prelude::*;
+
+    use super::*;
+
+    #[test]
+    fn single_thread() {
+        let pool = rayon::ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+        pool.install(|| {
+            let data = (0u32..100).collect::<Vec<_>>();
+            let parallel_pipeline = data.into_par_iter().map(|num| num * 2);
+            let mut result: Vec<_> =
+                par_bridge(5, parallel_pipeline, |seq_iter| seq_iter.collect());
+
+            assert_eq!(result.len(), 100);
+
+            result.sort_unstable();
+            assert_eq!(result[0], 0);
+            assert_eq!(result[1], 2);
+        });
     }
 }
